@@ -3,8 +3,9 @@ import Image from "next/image";
 export default function Home() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center p-24">
-      <h1 className="text-4xl font-bold">Habit Quest Backoffice</h1>
+      <h1 className="text-4xl font-bold">Habit Quest</h1>
       <p className="mt-4 text-xl">레벨업 준비 완료 🎮</p>
+      <p className="mt-4 text-xl">this proj</p>
     </div>
   );
 }
