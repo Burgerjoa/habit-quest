@@ -39,3 +39,29 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# =========================
+# LLM Agents & AI Tools
+# =========================
+
+# Cursor AI
+.cursor/
+.cursorrules
+
+# Windsurf / Codeium
+.windsurfrules
+.codeium/
+
+# Aider (Terminal Agent)
+.aider*
+.aider.chat.history.md
+.aider.conf.yml
+.aider.tags.cache.v3
+
+# GitHub Copilot (Local custom instructions)
+.github/copilot-instructions.md
+
+# Custom prompt files or chat logs (본인이 직접 적는 프롬프트 파일들)
+prompt.md
+llm-instructions.txt
+*.chatlog
