@@ -1,4 +1,5 @@
 import HabitManager from "@/features/habit/components/HabitManager";
+import PlayerStats from "@/features/quest/components/PlayerStats";
 
 export default function Home() {
   return (
@@ -8,7 +9,7 @@ export default function Home() {
         <p className="text-xl text-gray-600 dark:text-zinc-400">레벨업 준비 완료 🎮</p>
       </div>
 
-      {/* 🚀 우리가 만든 조각(컴포넌트)을 여기에 조립합니다! */}
+      <PlayerStats />
       <HabitManager />
     </main>
   );

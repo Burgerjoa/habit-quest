@@ -25,9 +25,10 @@ export const useQuestStore = create<QuestState>()(
                         };
                     } else {
                         return {
-                            currentExp: totalExp,
+                            currentExp: Math.max(0, totalExp),
                         };
                     }
+
                 }),
             resetQuest: () =>
                 set({
