@@ -4,6 +4,16 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
+  --font-pixel: var(--font-pixel), sans-serif;
+  --font-press: var(--font-press), monospace;
+  --shadow-retro: 4px 4px 0px 0px rgba(0, 0, 0, 1);
+  --shadow-retro-lg: 8px 8px 0px 0px rgba(0, 0, 0, 1);
+  --shadow-retro-active: 1px 1px 0px 0px rgba(0, 0, 0, 1);
+  --color-retro-bg: #1a1a24;
+  --color-retro-green: #4ade80;
+  --color-retro-yellow: #facc15;
+  --color-retro-red: #f87171;
+  --color-retro-blue: #60a5fa;
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -117,6 +127,7 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }

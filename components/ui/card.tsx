@@ -15,6 +15,22 @@ function Card({ className, ...props }: React.ComponentProps<"div">) {
   )
 }
 
+function RetroCard({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="card"
+      className={cn(
+        "bg-card text-card-foreground flex flex-col gap-6 rounded-none border-4 border-black py-6 shadow-retro",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+
+
+
 function CardHeader({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
@@ -89,4 +105,5 @@ export {
   CardAction,
   CardDescription,
   CardContent,
+  RetroCard,
 }

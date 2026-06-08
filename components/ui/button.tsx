@@ -10,6 +10,9 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default: "bg-primary text-primary-foreground hover:bg-primary/90",
+        retro: "border-4 border-black bg-retro-yellow text-black shadow-retro hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-retro-active active:translate-x-[4px] active:translate-y-[4px] active:shadow-none font-press text-xs uppercase",
+        retroPrimary: "border-4 border-black bg-retro-blue text-white shadow-retro hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-retro-active active:translate-x-[4px] active:translate-y-[4px] active:shadow-none font-press text-xs uppercase",
+        retroSuccess: "border-4 border-black bg-retro-green text-black shadow-retro hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-retro-active active:translate-x-[4px] active:translate-y-[4px] active:shadow-none font-press text-xs uppercase",
         destructive:
           "bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60",
         outline:
