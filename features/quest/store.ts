@@ -12,6 +12,7 @@ interface QuestState {
     fetchStats: () => Promise<void>;
     addExp: (amount: number) => Promise<void>;
     resetQuest: () => Promise<void>;
+    subscribeStats: (userId: string) => () => void;
 }
 
 export const useQuestStore = create<QuestState>(
@@ -95,5 +96,27 @@ export const useQuestStore = create<QuestState>(
                 }
             }
             set({ isLoading: false });
+        },
+        subscribeStats: (userId: string) => {
+            const channel = supabase.channel(`profile-${userId}`)
+                .on('postgres_changes', {
+                    event: 'UPDATE',
+                    schema: 'public',
+                    table: 'profiles',
+                    filter: `id=eq.${userId}`,
+
+                },
+                    (payload) => {
+                        set({
+                            level: payload.new.level,
+                            currentExp: payload.new.current_exp,
+                            nextExp: payload.new.next_exp,
+                        });
+                    })
+                .subscribe()
+            return () => {
+                supabase.removeChannel(channel);
+            };
         }
-    }));
+    })
+);

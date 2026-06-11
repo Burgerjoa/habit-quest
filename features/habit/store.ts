@@ -13,6 +13,7 @@ interface HabitState {
     addHabit: (title: string, description: string, category: HabitCategory, expReward: number) => Promise<void>;
     toggleHabit: (id: string) => Promise<void>;
     deleteHabit: (id: string) => Promise<void>;
+    subscribeHabits: (userId: string) => () => void;
 
 }
 
@@ -101,12 +102,73 @@ export const useHabitStore = create<HabitState>((set, get) => ({
             return;
         }
         await get().fetchHabits();
+    },
+    subscribeHabits: (userId: string) => {
+        const channel = supabase.channel(`habit-${userId}`)
+            .on('postgres_changes', {
+                event: '*',
+                schema: "public",
+                table: "habits",
+                filter: `user_id=eq.${userId}`,
+            },
+                (payload) => {
+                    const { eventType, new: newRecord, old: oldRecord } = payload;
+                    if (eventType === 'INSERT') {
+                        const formattedHabit: Habit = {
+                            id: newRecord.id,
+                            title: newRecord.title,
+                            description: newRecord.description,
+                            category: newRecord.category as HabitCategory,
+                            isCompleted: newRecord.is_completed,
+                            expReward: newRecord.exp_reward,
+                            streak: newRecord.streak,
+                            createdAt: newRecord.created_at,
+                        }
+                        set((state) => ({
+                            habits: [...state.habits, formattedHabit],
+                            isLoading: false
+                        }));
+                    }
+                    else if (eventType === 'UPDATE') {
+                        const formattedHabit: Habit = {
+                            id: newRecord.id,
+                            title: newRecord.title,
+                            description: newRecord.description,
+                            category: newRecord.category as HabitCategory,
+                            isCompleted: newRecord.is_completed,
+                            expReward: newRecord.exp_reward,
+                            streak: newRecord.streak,
+                            createdAt: newRecord.created_at,
+                        };
+                        set((state) => ({
+                            habits: state.habits.map((habit) =>
+                                habit.id === formattedHabit.id ? formattedHabit : habit
+                            ),
+                            isLoading: false
+                        }));
+
+                    }
+                    else if (eventType === 'DELETE') {
+                        set((state) => ({
+                            habits: state.habits.filter((habit) => habit.id !== oldRecord.id),
+                            isLoading: false
+                        }));
+                    }
+
+
+
+
+                }
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+
+
+
+        }
     }
-
-
-
-
-
 }))
 
 

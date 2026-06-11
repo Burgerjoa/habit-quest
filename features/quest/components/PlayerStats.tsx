@@ -3,10 +3,27 @@
 import { RetroCard } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useQuestStore } from "../store";
+import { useEffect } from "react";
+import { supabase } from "@/lib/supabase/client";
+
 
 export default function PlayerStats() {
-    const { level, currentExp, nextExp, resetQuest } = useQuestStore();
+    const { level, currentExp, nextExp, resetQuest, subscribeStats, fetchStats } = useQuestStore();
     const expPercentage = Math.min((currentExp / nextExp) * 100, 100);
+    useEffect(() => {
+        fetchStats();
+        let unsubscribe: (() => void) | undefined;
+        supabase.auth.getUser().then(({ data: { user } }) => {
+            if (user) {
+                unsubscribe = subscribeStats(user.id);
+            }
+        });
+        return () => {
+            if (unsubscribe) {
+                unsubscribe();
+            }
+        }
+    }, [fetchStats, subscribeStats])
 
     return (
         <RetroCard className="w-full max-w-md mx-auto bg-retro-bg border-4 border-black p-6 space-y-4">

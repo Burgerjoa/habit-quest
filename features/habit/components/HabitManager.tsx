@@ -1,16 +1,32 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useHabitStore } from "../store"
 import { HabitCategory } from "../types";
 import { RetroCard } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/lib/supabase/client";
+
 
 export default function HabitManager() {
-    const { habits, addHabit, toggleHabit, deleteHabit } = useHabitStore();
+    const { habits, addHabit, toggleHabit, deleteHabit, fetchHabits, subscribeHabits } = useHabitStore();
 
     const [title, setTitle] = useState("");
     const [category, setCategory] = useState<HabitCategory>("routine");
+    useEffect(() => {
+        fetchHabits();
+        let unsubscribe: (() => void) | undefined;
+        supabase.auth.getUser().then(({ data: { user } }) => {
+            if (user) {
+                unsubscribe = subscribeHabits(user.id);
+            }
+        });
+        return () => {
+            if (unsubscribe) {
+                unsubscribe();
+            }
+        }
+    }, [fetchHabits, subscribeHabits])
 
     //습관 추가 핸들러
     const handleSubmit = (e: React.SubmitEvent) => {

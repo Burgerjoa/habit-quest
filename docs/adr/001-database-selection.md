@@ -15,9 +15,9 @@
 ## 3. Decision (결정)
 - 우리는 **Supabase**를 최종 백엔드로 선택함.
 - **선택 근거 (Why)**:
-  1. : Supabase는 RDB 기반으로 설계되어 있어, 습관 데이터와 스트릭 정보를 관계형으로 관리하기 유리함.
-  2. : TypeScript와 타입 호환성이 뛰어나고 초기 타입 생성이 용이함
-  3. : Next.js App Router와의 아키텍처 연계가 매끄러움
+  1. **관계형 데이터 설계(RDB)의 이점** : Supabase는 RDB 기반으로 설계되어 있어, 습관 데이터와 스트릭 정보를 관계형으로 관리하기 유리함.
+  2. **TypeScript와 타입 호환성** : TypeScript와 타입 호환성이 뛰어나고 초기 타입 생성이 용이함
+  3. **Next.js App Router와의 아키텍처 연계** : Next.js App Router와의 아키텍처 연계가 매끄러움
 
 ## 4. Consequences (결과 및 영향)
 - **긍정적 영향**: Next.js App Router 및 TypeScript와의 강력한 타입 호환, RDB 설계를 통한 복잡한 통계 쿼리 구현 가능.
