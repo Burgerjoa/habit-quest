@@ -85,6 +85,14 @@ export const useHabitStore = create<HabitState>((set, get) => ({
             set({ error: error.message, isLoading: false })
             return
         }
+
+        const addExp = useQuestStore.getState().addExp;
+        if (nextCompletedState) {
+            await addExp(targetHabit.expReward);
+        } else {
+            await addExp(-targetHabit.expReward);
+        }
+
         await get().fetchHabits();
 
     },

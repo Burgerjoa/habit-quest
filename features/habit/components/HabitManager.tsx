@@ -15,7 +15,7 @@ export default function HabitManager() {
 
     const [title, setTitle] = useState("");
     const [category, setCategory] = useState<HabitCategory>("routine");
-    const [showConfetti, setShowConfetti] = useState(false);
+    const [confettiTrigger, setConfettiTrigger] = useState(0);
     useEffect(() => {
         fetchHabits();
         let unsubscribe: (() => void) | undefined;
@@ -44,8 +44,8 @@ export default function HabitManager() {
         <RetroCard className="w-full max-w-md mx-auto bg-retro-bg border-4 border-black p-6 space-y-6">
             <h2 className="text-lg font-press text-retro-yellow border-b-4 border-dashed border-black pb-3">Quest 1: 습관 형성하기 🎯</h2>
             <PixelConfetti
-                trigger={showConfetti}
-                onComplete={() => setShowConfetti(false)}
+                trigger={confettiTrigger}
+                onComplete={() => {}}
             />
             <form onSubmit={handleSubmit} className="space-y-3">
                 <input
@@ -87,7 +87,7 @@ export default function HabitManager() {
                                 checked={habit.isCompleted}
                                 onChange={() => {
                                     if (!habit.isCompleted) {
-                                        setShowConfetti(true);
+                                        setConfettiTrigger((prev) => prev + 1);
                                     }
                                     toggleHabit(habit.id);
                                 }}
