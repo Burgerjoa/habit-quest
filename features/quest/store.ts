@@ -9,10 +9,12 @@ interface QuestState {
     nextExp: number;
     isLoading: boolean;
     error: string | null;
+    isLeveledUp: boolean;
     fetchStats: () => Promise<void>;
     addExp: (amount: number) => Promise<void>;
     resetQuest: () => Promise<void>;
     subscribeStats: (userId: string) => () => void;
+    closeLevelUpModal: () => void;
 }
 
 export const useQuestStore = create<QuestState>(
@@ -22,6 +24,7 @@ export const useQuestStore = create<QuestState>(
         nextExp: 100,
         isLoading: false,
         error: null,
+        isLeveledUp: false,
         fetchStats: async () => {
             set({ isLoading: true, error: null })
             const { data: { user } } = await supabase.auth.getUser()
@@ -64,6 +67,9 @@ export const useQuestStore = create<QuestState>(
                 newExp = 0;
             }
             set({ level: newLevel, currentExp: newExp, nextExp: newNextExp });
+            if (newLevel > level) {
+                set({ isLeveledUp: true });
+            }
             const { data: { user } } = await supabase.auth.getUser();
             if (user) {
                 const { error } = await supabase
@@ -117,6 +123,10 @@ export const useQuestStore = create<QuestState>(
             return () => {
                 supabase.removeChannel(channel);
             };
-        }
+        },
+
+        closeLevelUpModal: () => {
+            set({ isLeveledUp: false });
+        },
     })
 );

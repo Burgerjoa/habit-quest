@@ -1,10 +1,11 @@
-// features/quest/components/PlayerStats.tsx 뼈대 가이드
 "use client";
 import { RetroCard } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useQuestStore } from "../store";
 import { useEffect } from "react";
 import { supabase } from "@/lib/supabase/client";
+import LevelUpModal from "./LevelUpModal";
+
 
 
 export default function PlayerStats() {
@@ -48,7 +49,7 @@ export default function PlayerStats() {
                     />
                 </div>
             </div>
-
+            <LevelUpModal />
             <Button
                 variant="retro"
                 onClick={resetQuest}

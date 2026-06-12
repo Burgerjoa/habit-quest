@@ -6,6 +6,8 @@ import { HabitCategory } from "../types";
 import { RetroCard } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase/client";
+import PixelConfetti from "./PixelConfetti";
+
 
 
 export default function HabitManager() {
@@ -13,6 +15,7 @@ export default function HabitManager() {
 
     const [title, setTitle] = useState("");
     const [category, setCategory] = useState<HabitCategory>("routine");
+    const [showConfetti, setShowConfetti] = useState(false);
     useEffect(() => {
         fetchHabits();
         let unsubscribe: (() => void) | undefined;
@@ -28,7 +31,6 @@ export default function HabitManager() {
         }
     }, [fetchHabits, subscribeHabits])
 
-    //습관 추가 핸들러
     const handleSubmit = (e: React.SubmitEvent) => {
         e.preventDefault();
         if (!title.trim()) return;
@@ -41,7 +43,10 @@ export default function HabitManager() {
     return (
         <RetroCard className="w-full max-w-md mx-auto bg-retro-bg border-4 border-black p-6 space-y-6">
             <h2 className="text-lg font-press text-retro-yellow border-b-4 border-dashed border-black pb-3">Quest 1: 습관 형성하기 🎯</h2>
-
+            <PixelConfetti
+                trigger={showConfetti}
+                onComplete={() => setShowConfetti(false)}
+            />
             <form onSubmit={handleSubmit} className="space-y-3">
                 <input
                     type="text"
@@ -81,6 +86,9 @@ export default function HabitManager() {
                                 type="checkbox"
                                 checked={habit.isCompleted}
                                 onChange={() => {
+                                    if (!habit.isCompleted) {
+                                        setShowConfetti(true);
+                                    }
                                     toggleHabit(habit.id);
                                 }}
                                 className="w-6 h-6 border-4 border-black bg-white checked:bg-retro-green appearance-none cursor-pointer rounded-none flex items-center justify-center after:content-['✓'] after:hidden checked:after:block after:text-black after:font-extrabold after:text-xs"
