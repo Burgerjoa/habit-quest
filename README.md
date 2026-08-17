@@ -78,10 +78,3 @@ npm run build    # 프로덕션 빌드
 npm run start    # 프로덕션 서버
 npm run lint     # ESLint 검사
 ```
-
-## 관련 문서
-
-- [Supabase 선정 ADR](./docs/adr/001-database-selection.md)
-- [인증과 Route Guard](./docs/day2-learning-notes.md)
-- [Zustand와 Supabase Realtime](./docs/day3-learning-notes.md)
-- [Framer Motion 애니메이션](./docs/day4-learning-notes.md)
