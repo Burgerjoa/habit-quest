@@ -1,5 +1,4 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono, Pixelify_Sans, Press_Start_2P } from "next/font/google";
+import { Pixelify_Sans, Press_Start_2P } from "next/font/google";
 import "./globals.css";
 
 const pixelify = Pixelify_Sans({

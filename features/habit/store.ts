@@ -1,239 +1,158 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
-import { Habit, HabitCategory } from "./types";
-import { useQuestStore } from "../quest/store";
 import { supabase } from "@/lib/supabase/client";
+import { useQuestStore } from "@/features/quest/store";
+import type { Tables } from "@/lib/supabase/database.types";
+import type { Completion } from "./progress";
+import type { Habit, HabitCategory } from "./types";
+
+type HabitRow = Tables<"habits">;
+type CompletionRow = Tables<"habit_completions">;
 
 interface HabitState {
     habits: Habit[];
+    completions: Completion[];
     isLoading: boolean;
+    isMutating: boolean;
+    hasLoaded: boolean;
     error: string | null;
-
-    fetchHabits: () => Promise<void>;
-    addHabit: (title: string, description: string, category: HabitCategory, expReward: number) => Promise<void>;
-    toggleHabit: (id: string) => Promise<void>;
-    deleteHabit: (id: string) => Promise<void>;
-    subscribeHabits: (userId: string) => () => void;
-
+    fetchData: () => Promise<void>;
+    addHabit: (title: string, category: HabitCategory) => Promise<boolean>;
+    editHabit: (id: string, title: string, category: HabitCategory) => Promise<boolean>;
+    archiveHabit: (id: string) => Promise<boolean>;
+    toggleHabit: (id: string, dateKey: string) => Promise<boolean | null>;
+    subscribeData: (userId: string) => () => void;
 }
 
-export const useHabitStore = create<HabitState>((set, get) => ({
+const toHabit = (row: HabitRow): Habit => ({
+    id: row.id,
+    title: row.title,
+    description: row.description ?? undefined,
+    category: row.category as HabitCategory,
+    expReward: row.exp_reward,
+    createdAt: row.created_at,
+    archivedAt: row.archived_at,
+});
 
+const toCompletion = (row: CompletionRow): Completion => ({
+    habitId: row.habit_id,
+    completedOn: row.completed_on,
+});
+
+export const useHabitStore = create<HabitState>((set, get) => ({
     habits: [],
+    completions: [],
     isLoading: false,
+    isMutating: false,
+    hasLoaded: false,
     error: null,
 
-
-    fetchHabits: async () => {
-        set({ isLoading: true });
-        const { data, error } = await supabase.from('habits').select('*')
-        if (error) {
-            set({ error: error.message, isLoading: false });
-            return
-        }
-        if (data) {
-            const formatted = data.map((habit) => ({
-                id: habit.id,
-                title: habit.title,
-                description: habit.description || undefined,
-                category: habit.category as HabitCategory,
-                isCompleted: habit.is_completed,
-                expReward: habit.exp_reward,
-                streak: habit.streak,
-                createdAt: habit.created_at,
-            }))
-            set({ habits: formatted, isLoading: false })
-        }
-    },
-
-    addHabit: async (title: string, description: string, category: HabitCategory, expReward: number) => {
-        set({ isLoading: true });
-
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
-            set({ error: '로그인이 필요합니다.', isLoading: false });
-            return
-        }
-        const { error } =
-            await supabase.from('habits').insert({
-                title,
-                description,
-                category,
-                exp_reward: expReward,
-                user_id: user.id,
-            });
-
-        if (error) {
-            set({ error: error.message, isLoading: false });
-            return
-        }
-        await get().fetchHabits();
-
-    },
-
-    toggleHabit: async (id: string) => {
-        set({ isLoading: true });
-        const targetHabit = get().habits.find((h) => h.id === id);
-        if (!targetHabit) return;
-        const nextCompletedState = !targetHabit.isCompleted;
-
-        const { error } = await supabase.from('habits').update({
-            is_completed: nextCompletedState,
-        })
-            .eq('id', id);
-        if (error) {
-            set({ error: error.message, isLoading: false })
-            return
-        }
-
-        const addExp = useQuestStore.getState().addExp;
-        if (nextCompletedState) {
-            await addExp(targetHabit.expReward);
-        } else {
-            await addExp(-targetHabit.expReward);
-        }
-
-        await get().fetchHabits();
-
-    },
-
-    deleteHabit: async (id) => {
-        set({ isLoading: true });
-
-        const { error } =
-            await supabase
-                .from('habits')
-                .delete()
-                .eq('id', id);
-        if (error) {
-            set({ error: error.message, isLoading: false });
+    fetchData: async () => {
+        set({ isLoading: true, error: null });
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        if (authError || !user) {
+            set({ habits: [], completions: [], error: authError?.message ?? "로그인이 필요합니다", isLoading: false });
             return;
         }
-        await get().fetchHabits();
-    },
-    subscribeHabits: (userId: string) => {
-        const channel = supabase.channel(`habit-${userId}`)
-            .on('postgres_changes', {
-                event: '*',
-                schema: "public",
-                table: "habits",
-                filter: `user_id=eq.${userId}`,
-            },
-                (payload) => {
-                    const { eventType, new: newRecord, old: oldRecord } = payload;
-                    if (eventType === 'INSERT') {
-                        const formattedHabit: Habit = {
-                            id: newRecord.id,
-                            title: newRecord.title,
-                            description: newRecord.description,
-                            category: newRecord.category as HabitCategory,
-                            isCompleted: newRecord.is_completed,
-                            expReward: newRecord.exp_reward,
-                            streak: newRecord.streak,
-                            createdAt: newRecord.created_at,
-                        }
-                        set((state) => ({
-                            habits: [...state.habits, formattedHabit],
-                            isLoading: false
-                        }));
-                    }
-                    else if (eventType === 'UPDATE') {
-                        const formattedHabit: Habit = {
-                            id: newRecord.id,
-                            title: newRecord.title,
-                            description: newRecord.description,
-                            category: newRecord.category as HabitCategory,
-                            isCompleted: newRecord.is_completed,
-                            expReward: newRecord.exp_reward,
-                            streak: newRecord.streak,
-                            createdAt: newRecord.created_at,
-                        };
-                        set((state) => ({
-                            habits: state.habits.map((habit) =>
-                                habit.id === formattedHabit.id ? formattedHabit : habit
-                            ),
-                            isLoading: false
-                        }));
-
-                    }
-                    else if (eventType === 'DELETE') {
-                        set((state) => ({
-                            habits: state.habits.filter((habit) => habit.id !== oldRecord.id),
-                            isLoading: false
-                        }));
-                    }
-
-
-
-
-                }
-            )
-            .subscribe();
-
-        return () => {
-            supabase.removeChannel(channel);
-
-
-
+        const { data: habitRows, error: habitError } = await supabase.from("habits")
+            .select("*").eq("user_id", user.id).order("created_at", { ascending: false });
+        if (habitError) {
+            set({ error: habitError.message, isLoading: false });
+            return;
         }
-    }
-}))
 
+        // Supabase limits a single response; page through history so long streaks stay accurate.
+        const completionRows: CompletionRow[] = [];
+        for (let offset = 0; ; offset += 1000) {
+            const { data, error } = await supabase.from("habit_completions")
+                .select("*").eq("user_id", user.id)
+                .order("completed_on", { ascending: false })
+                .order("habit_id", { ascending: true })
+                .range(offset, offset + 999);
+            if (error) {
+                set({ error: error.message, isLoading: false });
+                return;
+            }
+            completionRows.push(...(data ?? []));
+            if (!data || data.length < 1000) break;
+        }
+        set({ habits: (habitRows ?? []).map(toHabit), completions: completionRows.map(toCompletion), isLoading: false, hasLoaded: true });
+    },
 
+    addHabit: async (title, category) => {
+        const trimmed = title.trim();
+        if (!trimmed || get().isMutating) return false;
+        set({ isMutating: true, error: null });
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+            set({ error: "로그인이 필요합니다", isMutating: false });
+            return false;
+        }
+        const { error } = await supabase.from("habits").insert({
+            user_id: user.id, title: trimmed, category,
+        });
+        if (error) {
+            set({ error: error.message, isMutating: false });
+            return false;
+        }
+        await get().fetchData();
+        set({ isMutating: false });
+        return !get().error;
+    },
 
+    editHabit: async (id, title, category) => {
+        const trimmed = title.trim();
+        if (!trimmed || get().isMutating) return false;
+        set({ isMutating: true, error: null });
+        const { error } = await supabase.from("habits")
+            .update({ title: trimmed, category }).eq("id", id);
+        if (error) {
+            set({ error: error.message, isMutating: false });
+            return false;
+        }
+        await get().fetchData();
+        set({ isMutating: false });
+        return !get().error;
+    },
 
-// export const useHabitStore = create<HabitState>()(
-//     persist(
-//         (set) => ({
-//             habits: [],
-//             addHabit: (title, description, category, expReward) =>
-//                 set((state) => {
-//                     const newHabit: Habit = {
-//                         id: crypto.randomUUID(),
-//                         title,
-//                         description,
-//                         category,
-//                         isCompleted: false,
-//                         streak: 0,
-//                         expReward,
-//                         createdAt: new Date().toISOString(),
-//                     };
-//                     return { habits: [...state.habits, newHabit] };
-//                 }),
-//             // 🔄 토글 함수 수정
-//             toggleHabit: (id) =>
-//                 set((state) => {
-//                     // 2. 현재 토글하려는 습관을 배열에서 찾습니다.
-//                     const targetHabit = state.habits.find((h) => h.id === id);
-//                     if (!targetHabit) return {}; // 예외 처리
-//                     // 3. 다음으로 바뀔 완료 상태 (현재 완료 상태의 반대)
-//                     const nextCompletedState = !targetHabit.isCompleted;
-//                     // 4. 퀘스트 스토어의 addExp 함수를 가져옵니다.
-//                     const addExp = useQuestStore.getState().addExp;
-//                     // 🎯 [미션] 다음 완료 상태(nextCompletedState)가 참(True)이면 경험치를 더하고,
-//                     // 거짓(False)이면 경험치를 빼는 조건문 분기를 작성해 보세요!
-//                     if (nextCompletedState) {
-//                         // 완료됨: 경험치 획득!
-//                         addExp(targetHabit.expReward);
-//                     } else {
-//                         // 힌트: 완료 해제됨: 획득했던 경험치 차감!
-//                         // expReward 만큼 마이너스 값을 전달해야 합니다.
-//                         addExp(-targetHabit.expReward);
-//                     }
-//                     // 5. 변경된 완료 상태로 습관 배열을 업데이트하여 리턴합니다.
-//                     return {
-//                         habits: state.habits.map((habit) =>
-//                             habit.id === id
-//                                 ? { ...habit, isCompleted: nextCompletedState }
-//                                 : habit
-//                         ),
-//                     };
-//                 }),
-//             deleteHabit: (id) =>
-//                 set((state) => ({
-//                     habits: state.habits.filter((habit) => habit.id !== id),
-//                 })),
-//         }),
-//         { name: "habit-quest-storage" }
-//     )
-// );
+    archiveHabit: async (id) => {
+        if (get().isMutating) return false;
+        set({ isMutating: true, error: null });
+        const { error } = await supabase.from("habits")
+            .update({ archived_at: new Date().toISOString() }).eq("id", id);
+        if (error) {
+            set({ error: error.message, isMutating: false });
+            return false;
+        }
+        await get().fetchData();
+        set({ isMutating: false });
+        return !get().error;
+    },
+
+    toggleHabit: async (id, dateKey) => {
+        if (get().isMutating) return null;
+        set({ isMutating: true, error: null });
+        const { data, error } = await supabase.rpc("toggle_habit_completion", {
+            p_habit_id: id, p_completed_on: dateKey,
+        });
+        if (error) {
+            set({ error: error.message, isMutating: false });
+            return null;
+        }
+        await Promise.all([get().fetchData(), useQuestStore.getState().fetchStats()]);
+        set({ isMutating: false });
+        return get().error ? null : data;
+    },
+
+    subscribeData: (userId) => {
+        const refresh = () => { void get().fetchData(); };
+        const channel = supabase.channel(`habit-${userId}`)
+            .on("postgres_changes", {
+                event: "*", schema: "public", table: "habits", filter: `user_id=eq.${userId}`,
+            }, refresh)
+            .on("postgres_changes", {
+                event: "*", schema: "public", table: "habit_completions", filter: `user_id=eq.${userId}`,
+            }, refresh)
+            .subscribe();
+        return () => { void supabase.removeChannel(channel); };
+    },
+}));

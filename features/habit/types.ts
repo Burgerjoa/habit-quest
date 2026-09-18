@@ -5,8 +5,7 @@ export interface Habit {
     title: string;
     description?: string;
     category: HabitCategory;
-    isCompleted: boolean;
-    streak: number;
     expReward: number;
     createdAt: string;
+    archivedAt: string | null;
 }

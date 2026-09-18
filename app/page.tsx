@@ -1,22 +1,23 @@
-// app/page.tsx 뼈대 가이드
 import HabitManager from "@/features/habit/components/HabitManager";
 import PlayerStats from "@/features/quest/components/PlayerStats";
+import LogoutButton from "@/components/LogoutButton";
 
 export default function Home() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-6 bg-[#12121a]">
-      <div className="w-full max-w-2xl border-8 border-double border-retro-yellow bg-zinc-900 p-8 shadow-retro-lg space-y-8">
+    <main className="min-h-screen bg-[#12121a] px-3 py-6 text-white sm:px-6 sm:py-10">
+      <div className="mx-auto w-full max-w-4xl border-4 border-retro-yellow bg-zinc-900 p-4 shadow-retro-lg space-y-8 sm:border-8 sm:p-8">
+        <LogoutButton />
 
         <div className="text-center space-y-4 border-b-4 border-black pb-6">
           <h1 className="text-3xl md:text-4xl font-press text-retro-yellow animate-pulse tracking-wider">
             HABIT QUEST
           </h1>
           <p className="font-pixel text-retro-green text-sm">
-            INSERT COIN & LOG YOUR HABITS! 🎮
+            오늘의 습관을 기록하고, 쌓인 변화를 확인하세요.
           </p>
         </div>
 
-        <div className="grid grid-cols-1  gap-6 items-start">
+        <div className="space-y-6">
           <PlayerStats />
           <HabitManager />
         </div>

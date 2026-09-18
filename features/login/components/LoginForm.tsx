@@ -5,6 +5,8 @@ import { supabase } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { RetroCard } from "@/components/ui/card";
 import { useRouter } from "next/navigation";
+import { useHabitStore } from "@/features/habit/store";
+import { useQuestStore } from "@/features/quest/store";
 
 export default function LoginForm() {
     const [email, setEmail] = useState("");
@@ -18,15 +20,23 @@ export default function LoginForm() {
         setMessage("");
 
         if (isSignUp) {
-            const { error } = await supabase.auth.signUp({ email, password })
+            const { data, error } = await supabase.auth.signUp({ email, password })
             if (error) setMessage(error.message)
-            else setMessage("회원가입 성공! 메일을 확인해주세요")
+            else if (data.session) {
+                useHabitStore.setState({ habits: [], completions: [], hasLoaded: false, error: null });
+                useQuestStore.setState({ totalExp: 0, level: 1, currentExp: 0, nextExp: 100, hasLoaded: false, isLeveledUp: false, error: null });
+                router.replace("/");
+                router.refresh();
+            } else setMessage("확인 메일을 보냈습니다. 메일함에서 가입을 완료해주세요.")
         } else {
             const { error } = await supabase.auth.signInWithPassword({ email, password })
             if (error) setMessage(error.message)
             else {
                 setMessage("로그인 성공!")
-                router.push("/")
+                useHabitStore.setState({ habits: [], completions: [], hasLoaded: false, error: null });
+                useQuestStore.setState({ totalExp: 0, level: 1, currentExp: 0, nextExp: 100, hasLoaded: false, isLeveledUp: false, error: null });
+                router.replace("/")
+                router.refresh();
             }
         }
     };

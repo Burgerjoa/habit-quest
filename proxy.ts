@@ -34,8 +34,6 @@ export async function proxy(request: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser();
 
     const url = request.nextUrl.clone();
-    console.log("🔥 미들웨어 도는 중! 🔥")
-
     if (user && url.pathname === "/login") {
         url.pathname = "/";
         return NextResponse.redirect(url);
